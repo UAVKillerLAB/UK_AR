@@ -8,9 +8,9 @@ import matplotlib.pyplot as plt
 import datetime
 import math
 import sys,os
-sys.path.append(r'D:\OneDrive\Python_project\Github\AntiUAV_Python\Python\DBInfo.py')
+sys.path.append(r'D:\OneDrive\Python_project\Github\AntiUAV_Python\Python')
 
-from DBInfo import *
+# from DBInfo import *
 
 plt.ion()  # 开启一个画图的窗口
 ax1 = []  # 定义一个 x 轴的空列表用来接收动态的数据
@@ -102,7 +102,7 @@ def SelectData():
     global ch3_db_data
     global ch4_db_data
     try:
-        conn = pymysql.connect(host='192.168.3.6', port=3306, db='uav1015', user='root', passwd='123456',
+        conn = pymysql.connect(host="192.168.3.6", port=3306, db='uav1015', user='root', passwd="123456",
                                charset='utf8')
         cs1 = conn.cursor()
         cs1.execute("select ch1 from final_table")
