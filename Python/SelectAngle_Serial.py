@@ -7,6 +7,10 @@ import serial
 import matplotlib.pyplot as plt
 import datetime
 import math
+import sys,os
+sys.path.append(r'D:\OneDrive\Python_project\Github\AntiUAV_Python\Python\DBInfo.py')
+
+from DBInfo import *
 
 plt.ion()  # 开启一个画图的窗口
 ax1 = []  # 定义一个 x 轴的空列表用来接收动态的数据
@@ -211,22 +215,23 @@ def udp_recv(udp_socket):
 
 
 def main():
-    a = input("按下回车以开始")
-    PC_IPAddr = get_host_ip()
-    PC_Port = 8080
-    print("等待接收数据")
-    SelectData()
-    udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)  # 创建套接字
-    udp_socket.bind((PC_IPAddr, PC_Port))  # 服务器绑定ip和端口
-
-    # 接收数据
-    # t = threading.Thread(target=udp_recv, args=(udp_socket,))
-    t = threading.Thread(target=USB_recv)
-
-    # 发送数据
-    # t1 = threading.Thread(target=udp_send, args=(udp_socket,))  # Thread函数用于并行
-    # t1.start()  # 发送并行开始
-    t.start()
+    # a = input("按下回车以开始")
+    # PC_IPAddr = get_host_ip()
+    # PC_Port = 8080
+    # print("等待接收数据")
+    # SelectData()
+    # udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)  # 创建套接字
+    # udp_socket.bind((PC_IPAddr, PC_Port))  # 服务器绑定ip和端口
+    #
+    # # 接收数据
+    # # t = threading.Thread(target=udp_recv, args=(udp_socket,))
+    # t = threading.Thread(target=USB_recv)
+    #
+    # # 发送数据
+    # # t1 = threading.Thread(target=udp_send, args=(udp_socket,))  # Thread函数用于并行
+    # # t1.start()  # 发送并行开始
+    # t.start()
+    print(DBIPAddr)
 
 
 def get_host_ip():
