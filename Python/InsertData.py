@@ -194,7 +194,6 @@ def USB_recv():
         data.append(int(("0x" + (USB_recv_data[48: 64].decode())), 16))
         InsertAngelData(distance, data[0], data[1], data[2], data[3])
         print("Raw_CH1_data:{:.15f}\nRaw_CH2_data:{:.15f}\nRaw_CH3_data:{:.15f}\nRaw_CH4_data:{:.15f}".format(data[0], data[1], data[2], data[3]))
-    ser.close()
 
 
 def Print(counnt, ch1_data, ch2_data, ch3_data, ch4_data):
