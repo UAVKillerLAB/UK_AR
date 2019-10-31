@@ -102,7 +102,7 @@ def SelectData():
     global ch3_db_data
     global ch4_db_data
     try:
-        conn = pymysql.connect(host="192.168.3.6", port=3306, db='uav1015', user='root', passwd="123456",
+        conn = pymysql.connect(host=DB_IPAddr, port=3306, db=DB_Name, user='root', passwd="123456",
                                charset='utf8')
         cs1 = conn.cursor()
         cs1.execute("select ch1 from final_table")
@@ -134,6 +134,10 @@ def SelectData():
 def SelectAngle(ch1_raw_data, ch2_raw_data, ch3_raw_data, ch4_raw_data):
     # print("Raw_CH1_data:%.15f\nRaw_CH2_data:%.15f\nRaw_CH3_data:%.15f\nRaw_CH4_data:%.15f" % (
     # ch1_raw_data, ch2_raw_data, ch3_raw_data, ch4_raw_data))
+    global ch1_db_data
+    global ch2_db_data
+    global ch3_db_data
+    global ch4_db_data
     # 归一化
     min_ch_data = min(ch1_raw_data, ch2_raw_data, ch3_raw_data, ch4_raw_data)
     min_ch_data = float(min_ch_data)
@@ -149,10 +153,7 @@ def SelectAngle(ch1_raw_data, ch2_raw_data, ch3_raw_data, ch4_raw_data):
     ch3_data = float(ch3_data)
     ch4_data = float(ch4_data)
     sum_difference = []
-    global ch1_db_data
-    global ch2_db_data
-    global ch3_db_data
-    global ch4_db_data
+
 
     for i in range(181):
         ch1ch2_difference = (20 * math.log((ch1_db_data[i] / ch2_db_data[i]), 10) - 20 * math.log((ch1_data / ch2_data),
@@ -178,15 +179,31 @@ def SelectAngle(ch1_raw_data, ch2_raw_data, ch3_raw_data, ch4_raw_data):
     return result
 
 
-def udp_send(udp_socket):
-    while True:
-        num1 = '192.168.3.5'
-        num2 = 8080
-        # send_data = input('请输入要发送的数据：')
-        send_data = "123"
-        send_data = send_data.encode('utf-8')
-        udp_socket.sendto(send_data, (num1, num2))  # sendto（发送数据，发送地址）
-    udp_socket.close()
+def udp_send(udp_socket, BetaAngle):
+    # while True:
+    mhesIPAddr = '192.168.3.5' # 民航二所IP
+    mhesPort = 8080 # 民航二所Port
+    # send_data = input('请输入要发送的数据：')
+    send_data_head = 0xb3b3
+    send_data_headlen = 34
+    send_data_latitude = 0
+    send_data_longitude = 0
+    send_data_height = 790
+    send_data_tarqua = 1
+    send_data_end = 0xb1af
+    send_data_tracknum = 1
+    send_data_trackdis = 0
+    send_data_bata = BetaAngle
+    send_data_alpha = 0
+    send_data_trackrate = 0
+    send_data = struct.pack('HHdddIHiffff', send_data_head, send_data_headlen, send_data_latitude,
+                            send_data_longitude, send_data_height, send_data_tarqua, send_data_end,
+                            send_data_tracknum, send_data_trackdis, send_data_bata, send_data_alpha,
+                            send_data_trackrate)
+    input('enter')
+    send_data = send_data.encode('utf-8') #这行代码需要测试 一达测试版本中没有这一行
+    udp_socket.sendto(send_data, (mhesIPAddr, mhesPort))  # sendto（发送数据，发送地址）
+    # udp_socket.close()
 
 
 def udp_recv(udp_socket):
@@ -215,23 +232,22 @@ def udp_recv(udp_socket):
 
 
 def main():
-    # a = input("按下回车以开始")
-    # PC_IPAddr = get_host_ip()
-    # PC_Port = 8080
-    # print("等待接收数据")
-    # SelectData()
-    # udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)  # 创建套接字
-    # udp_socket.bind((PC_IPAddr, PC_Port))  # 服务器绑定ip和端口
-    #
-    # # 接收数据
-    # # t = threading.Thread(target=udp_recv, args=(udp_socket,))
-    # t = threading.Thread(target=USB_recv)
-    #
-    # # 发送数据
-    # # t1 = threading.Thread(target=udp_send, args=(udp_socket,))  # Thread函数用于并行
-    # # t1.start()  # 发送并行开始
-    # t.start()
-    print(DBIPAddr)
+    GetInfo()
+    a = input("Press any key to start.")
+    print("等待接收数据")
+    SelectData()
+    global udp_socket
+    udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)  # 创建套接字
+    udp_socket.bind((PC_IPAddr, PC_Port))  # 服务器绑定ip和端口
+
+    # 接收数据
+    # t = threading.Thread(target=udp_recv, args=(udp_socket,))
+    t = threading.Thread(target=USB_recv)
+
+    # 发送数据
+    # t1 = threading.Thread(target=udp_send, args=(udp_socket,))  # Thread函数用于并行
+    # t1.start()  # 发送并行开始
+    t.start()
 
 
 def get_host_ip():
@@ -264,12 +280,47 @@ def USB_recv():
         print("Raw_CH1_data:%.15f\nRaw_CH2_data:%.15f\nRaw_CH3_data:%.15f\nRaw_CH4_data:%.15f" % (
             data[0], data[1], data[2], data[3]))
         matched_angle = SelectAngle(data[0], data[1], data[2], data[3])
+        udp_send(udp_socket, matched_angle)
         Print4(count, data[0], data[1], data[2], data[3], matched_angle)
         # Print1(count,SelectAngle(data[0], data[1], data[2], data[3]))
-        print("当前角度为: %d" % matched_angle)
+        print("\033[31m当前角度为:{}\033[0m".format(matched_angle))
         print("\n\n")
     ser.close()
 
+
+def GetInfo():
+    global DB_IPAddr
+    global DB_Name
+    global distance
+    global NowTime
+    global PC_IPAddr
+    global PC_Port
+    global TableName
+    DB_IPAddr = input("请输入数据库IP地址(默认192.168.3.2):192.168.")
+    if DB_IPAddr == "":
+        DB_IPAddr = "192.168.3.2"
+        print("192.168.3.2")
+    else:
+        DB_IPAddr = "192.168." + DB_IPAddr
+        print(DB_IPAddr)
+        pass
+    DB_Name = input("请输入数据库名(默认uav_data):")
+    if DB_Name == "":
+        DB_Name = "uav_data"
+        print(DB_Name)
+    else:
+        print(DB_Name)
+        pass
+    while True:
+        distance = input("距离：")
+        if distance != "":
+            break
+        else:
+            print("\033[31m请输入距离!\033[0m")
+    NowTime = datetime.datetime.now().strftime('%Y%m%d%H%M')
+    PC_IPAddr = get_host_ip()
+    PC_Port = 8080
+    TableName = "m" + distance + "d" + NowTime
 
 if __name__ == '__main__':
     main()
