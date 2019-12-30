@@ -13,8 +13,11 @@ ach1 = []  # 定义一个 y 轴的空列表用来接收动态的数据
 ach2 = []
 ach3 = []
 ach4 = []
-DB_IPAddr = "192.168.3.6"
-DB_Name = "uav_data"
+
+
+# DB_IPAddr = "192.168.3.6"
+# DB_Name = "uav_data"
+
 
 def Print4(counnt, ch1_data, ch2_data, ch3_data, ch4_data):
     data = datetime.date.today()
@@ -82,36 +85,23 @@ def udp_recv(udp_socket):
         # Print4(count, data[0], data[1], data[2], data[3])
         # Print1(count,SelectAngle(data[0], data[1], data[2], data[3]))
     udp_socket.close()
-    
 
 
 def main():
-    PC_IPAddr = get_host_ip()
-    PC_Port = 8080
-    global angle
-    global n
-    global distance
-    param = input("距离：")
-    # angle = (param.split("."))[0]
-    # distance = (param.split("."))[1]
-    distance = param
+    GetInfo()
     print("%s米开始定标" % distance)
-    distance = int(distance)
-    global NowTime
-    NowTime = datetime.datetime.now().strftime('%Y%m%d%H%M')
     try:
         conn = pymysql.connect(host=DB_IPAddr, port=3306, db=DB_Name, user='root', passwd='123456',
                                charset='utf8')
         cs1 = conn.cursor()
-        sql = "CREATE TABLE IF NOT EXISTS d%s (no INT DEFAULT NULL, time TIMESTAMP DEFAULT CURRENT_TIMESTAMP, distance int, ch1 VARCHAR(255), ch2 VARCHAR(255), ch3 VARCHAR(255), ch4 VARCHAR(255), ch5 VARCHAR(255), ch6 VARCHAR(255), ch7 VARCHAR(255), ch8 VARCHAR(255), ch1_raw VARCHAR(255), ch2_raw VARCHAR(255), ch3_raw VARCHAR(255), ch4_raw VARCHAR(255), ch5_raw VARCHAR(255), ch6_raw VARCHAR(255), ch7_raw VARCHAR(255), ch8_raw VARCHAR(255))"
-        count = cs1.execute(sql % NowTime)
+        sql = "CREATE TABLE IF NOT EXISTS {} (no INT DEFAULT NULL, time TIMESTAMP DEFAULT CURRENT_TIMESTAMP, distance int, ch1 VARCHAR(255), ch2 VARCHAR(255), ch3 VARCHAR(255), ch4 VARCHAR(255), ch5 VARCHAR(255), ch6 VARCHAR(255), ch7 VARCHAR(255), ch8 VARCHAR(255), ch1_raw VARCHAR(255), ch2_raw VARCHAR(255), ch3_raw VARCHAR(255), ch4_raw VARCHAR(255), ch5_raw VARCHAR(255), ch6_raw VARCHAR(255), ch7_raw VARCHAR(255), ch8_raw VARCHAR(255))"
+        count = cs1.execute(sql.format(TableName))
         # count = cs1.execute(sql)
         if count == 0:
-            print("%s数据表创建成功！" % NowTime)
+            print("{}数据表创建成功！".format(TableName))
         else:
-            print("%s数据表创建失败！" % NowTime)
+            print("{}数据表创建失败！".format(TableName))
         conn.commit()
-        # time.sleep(0.001)
         conn.commit()
         cs1.close()
         conn.close()
@@ -121,8 +111,8 @@ def main():
     udp_socket.bind((PC_IPAddr, PC_Port))  # 服务器绑定ip和端口
 
     # 接收数据
-    t = threading.Thread(target=udp_recv, args=(udp_socket,))
-    # t = threading.Thread(target=USB_recv)
+    # t = threading.Thread(target=udp_recv, args=(udp_socket,))
+    t = threading.Thread(target=USB_recv)
 
     # 发送数据
     # t1 = threading.Thread(target=udp_send, args=(udp_socket,))  # Thread函数用于并行
@@ -145,11 +135,9 @@ def main():
 '''
 
 
-
 def InsertAngelData(distance, ch1_raw_data, ch2_raw_data, ch3_raw_data, ch4_raw_data):
-    n = 1
     # print("Raw_CH1_data:%.15f\nRaw_CH2_data:%.15f\nRaw_CH3_data:%.15f\nRaw_CH4_data:%.15f" % (
-        # ch1_raw_data, ch2_raw_data, ch3_raw_data, ch4_raw_data))
+    # ch1_raw_data, ch2_raw_data, ch3_raw_data, ch4_raw_data))
     # 归一化
     min_ch_data = min(ch1_raw_data, ch2_raw_data, ch3_raw_data, ch4_raw_data)
     min_ch_data = float(min_ch_data)
@@ -157,27 +145,23 @@ def InsertAngelData(distance, ch1_raw_data, ch2_raw_data, ch3_raw_data, ch4_raw_
     ch2_data = float(ch2_raw_data) / min_ch_data
     ch3_data = float(ch3_raw_data) / min_ch_data
     ch4_data = float(ch4_raw_data) / min_ch_data
-    if ch1_data + ch2_data + ch3_data + ch4_data <= 4:
-        print("数据可能有误！")
+    if ch1_data <= 0 or ch2_data <= 0 or ch3_data <= 0 or ch4_data <= 0:
+        print("\033[31m数据可能有误！\033[0m")
 
     try:
         conn = pymysql.connect(host=DB_IPAddr, port=3306, db=DB_Name, user='root', passwd='123456',
                                charset='utf8')
         cs1 = conn.cursor()
-        cs1.execute("select count(*) from d%s" % NowTime)
+        cs1.execute("select count(*) from {}".format(TableName))
         m = cs1.fetchone()
-        sql = "INSERT INTO d%s(no, distance, ch1, ch2, ch3, ch4, ch1_raw, ch2_raw, ch3_raw, ch4_raw) VALUES('%d', '%d', '%.15f', '%.15f', '%.15f', '%.15f', '%d', '%d', '%d', '%d')"
-        for i in range(m[0], n + m[0]):
-            Print4(i, ch1_data, ch2_data, ch3_data, ch4_data)
-            count = cs1.execute(sql % (
-                NowTime, i + 1, int(distance), ch1_data, ch2_data, ch3_data, ch4_data, int(ch1_raw_data),
-                int(ch2_raw_data),
-                int(ch3_raw_data), int(ch4_raw_data)))
-            if count:
-                print("第%d个值插入成功！\n\n" % (i + 1))
-            else:
-                print("第%d个值插入失败！\n\n" % (i + 1))
-            conn.commit()
+        sql = "INSERT INTO {}(no, distance, ch1, ch2, ch3, ch4, ch1_raw, ch2_raw, ch3_raw, ch4_raw) VALUES('{}', '{}', '{:.15f}', '{:.15f}', '{:.15f}', '{:.15f}', '{}', '{}', '{}', '{}')"
+        Print4(m[0], ch1_data, ch2_data, ch3_data, ch4_data)
+        count = cs1.execute(sql.format(TableName, m[0] + 1, distance, ch1_data, ch2_data, ch3_data, ch4_data, ch1_raw_data, ch2_raw_data, ch3_raw_data, ch4_raw_data))
+        if count:
+            print("第%d个值插入成功！\n\n" % (m[0] + 1))
+        else:
+            print("第%d个值插入失败！\n\n" % (m[0] + 1))
+        conn.commit()
         cs1.close()
         conn.close()
     except Exception as e:
@@ -195,6 +179,7 @@ def get_host_ip():
 
 
 def USB_recv():
+    global distance
     ser = serial.Serial("COM5", 115200)
     ser.close()
     ser.open()
@@ -208,7 +193,7 @@ def USB_recv():
         data.append(int(("0x" + (USB_recv_data[32: 48].decode())), 16))
         data.append(int(("0x" + (USB_recv_data[48: 64].decode())), 16))
         InsertAngelData(distance, data[0], data[1], data[2], data[3])
-    ser.close()
+        print("Raw_CH1_data:{:.15f}\nRaw_CH2_data:{:.15f}\nRaw_CH3_data:{:.15f}\nRaw_CH4_data:{:.15f}".format(data[0], data[1], data[2], data[3]))
 
 
 def Print(counnt, ch1_data, ch2_data, ch3_data, ch4_data):
@@ -225,6 +210,39 @@ def Print(counnt, ch1_data, ch2_data, ch3_data, ch4_data):
     plt.plot(ax, ach4)
     plt.pause(0.1)  # 暂停一秒
     # plt.ioff()                   # 关闭画图的窗口
+
+
+def GetInfo():
+    global DB_IPAddr
+    global DB_Name
+    global distance
+    global NowTime
+    global PC_IPAddr
+    global PC_Port
+    global TableName
+    DB_IPAddr = input("请输入数据库IP地址(默认192.168.3.2):192.168.")
+    if DB_IPAddr == "":
+        DB_IPAddr = "192.168.3.2"
+        print("192.168.3.2")
+    else:
+        DB_IPAddr = "192.168." + DB_IPAddr
+        pass
+    DB_Name = input("请输入数据库名(默认uav_data):")
+    if DB_Name == "":
+        DB_Name = "uav_data"
+        print("uav_data")
+    else:
+        pass
+    while True:
+        distance = input("距离：")
+        if distance != "":
+            break
+        else:
+            print("\033[31m请输入距离!\033[0m")
+    NowTime = datetime.datetime.now().strftime('%Y%m%d%H%M')
+    PC_IPAddr = get_host_ip()
+    PC_Port = 8080
+    TableName = "m" + distance + "d" + NowTime
 
 
 if __name__ == '__main__':
