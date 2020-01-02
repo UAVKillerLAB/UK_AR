@@ -209,19 +209,19 @@ def udp_send(udp_socket, BetaAngle):
     # send_data = input('请输入要发送的数据：')
     send_data_head = 0xb3b3
     send_data_headlen = 34
-    send_data_latitude = 103 + (45 / 60) / 100 + (20 / 3600) / 10000
-    send_data_longitude = 31 + (7 / 60) / 100 + (2 / 3600) / 10000
+    send_data_latitude = 103
+    send_data_longitude = 31
     send_data_height = 790
     send_data_tarqua = 1
     send_data_end = 0xb1af
     send_data_tracknum = 1
     send_data_trackdis = 0
     send_data_bata = BetaAngle
-    send_data_alpha = 0
+    send_data_time = time.time()
     send_data_trackrate = 0
     send_data = struct.pack('<HHdddIHiffff', send_data_head, send_data_headlen, send_data_latitude,
                             send_data_longitude, send_data_height, send_data_tarqua, send_data_end,
-                            send_data_tracknum, send_data_trackdis, send_data_bata, send_data_alpha,
+                            send_data_tracknum, send_data_trackdis, send_data_bata, send_data_time,
                             send_data_trackrate)
 
     print(len(send_data))
