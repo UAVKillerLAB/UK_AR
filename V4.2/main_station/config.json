@@ -1,0 +1,14 @@
+{
+	"db_host" : "192.168.3.2",
+	"db_port" : 3306,
+	"db_user" : "root",
+	"db_password" : "123456",
+	"db_name" : "uav_data",
+	"com" : "com5",
+	"station10_latitude" : 30.659279,
+	"station10_longitude" : 104.195519,
+	"station8_latitude" : 30.659279,
+	"station8_longitude" : 104.195177,
+	"s10_correction_angle" : 90,
+	"s8_correction_angle" : 90
+}
