@@ -16,24 +16,24 @@ mycursor = mydb.cursor()
 
 # mycursor.execute("CREATE TABLE test (id INT AUTO_INCREMENT PRIMARY KEY, time TIMESTAMP DEFAULT CURRENT_TIMESTAMP, latitude VARCHAR(255), longitude VARCHAR(255), angle10 VARCHAR(255), distance10 VARCHAR(255), angle8 VARCHAR(255), distance8 VARCHAR(255), time10 VARCHAR(255), time8 VARCHAR(255))")
 
-# latitude = 60.999
-# longitude = 105.999
-# angle10 = 45.999
-# distance10 = 45.999
-# angle8 = 45.999
-# distance8 = 45.999
-# time10 = 45.999
-# time8 = 45.999
-# sql = "INSERT INTO test (latitude, longitude, angle10, distance10, angle8, distance8, time10, time8) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"
-# val = (latitude, longitude, angle10, distance10, angle8, distance8, time10, time8)
-# mycursor.execute(sql, val)
-# mydb.commit()  # 数据表内容有更新，必须使用到该语句
+latitude = 30.658932
+longitude = 104.195456
+angle10 = 45.999
+distance10 = 45.999
+angle8 = 45.999
+distance8 = 45.999
+time10 = 45.999
+time8 = 45.999
+sql = "INSERT INTO test (latitude, longitude, angle10, distance10, angle8, distance8, time10, time8) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"
+val = (latitude, longitude, angle10, distance10, angle8, distance8, time10, time8)
+mycursor.execute(sql, val)
+mydb.commit()  # 数据表内容有更新，必须使用到该语句
 
 
 
 
-mycursor.execute("SELECT latitude,longitude from test where id = (SELECT max(id) FROM test)")
-
-myresult = mycursor.fetchone()
-
-print(myresult)
+# mycursor.execute("SELECT latitude,longitude from test where id = (SELECT max(id) FROM test)")
+#
+# myresult = mycursor.fetchone()
+#
+# print(myresult)
