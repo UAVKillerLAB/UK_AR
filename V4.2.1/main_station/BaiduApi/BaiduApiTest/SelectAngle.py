@@ -16,9 +16,18 @@ url2 = r'http://127.0.0.1:8000/ajax_list/'
 def main(request):
     mycursor = mydb.cursor()
     mycursor.execute("SELECT longitude, latitude from test where id = (SELECT max(id) FROM test)")
+
     data_show = mycursor.fetchone()
+
+    mycursor.execute("SELECT  id, time from test where id = (SELECT max(id) FROM test)")
+    data_show2 = list(mycursor.fetchone())                                          ##  transform SQL tuple data to list data
+    data_show2[1] = data_show2[1].strftime("%Y-%m-%d %H:%M:%S")                     ##  transform datatime to a standard char data
+
+    mydb.commit()
     data_show = [float(x) for x in data_show]
-    jsontemp = json.dumps(data_show)
+
+    data=data_show + data_show2
+    jsontemp = json.dumps(data)
     return HttpResponse(jsontemp, content_type='application/json')
 
 
