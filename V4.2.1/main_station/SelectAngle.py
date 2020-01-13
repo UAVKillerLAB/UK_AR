@@ -5,6 +5,7 @@ import socket  # 引入套接字
 import threading  # 引入并行
 import time
 
+import numpy as np
 import pymysql
 import struct
 import serial
@@ -73,6 +74,7 @@ def Print4(counnt, ch1_data, ch2_data, ch3_data, ch4_data, angle):
     plt.title('Channel Data')
     plt.xlabel("Time")
     plt.ylabel("Amplitude")
+    plt.legend(loc='upper left')
     plt.grid(True)
 
     plt.subplot(2, 1, 2)
@@ -466,12 +468,12 @@ def read_time():
     global run_flag
     while True:
         # 获取当前时间
-        nts[1] = int(time.strftime('%S', time.localtime(time.time())))
+        nts[1] = time.time()
         # 如果秒钟突变
-        if nts[1] != nts[0]:
+        if (nts[1] - nts[0]) >= 0.2:
             run_flag = 1
             # print(nts)
-        nts[0] = nts[1]
+            nts[0] = nts[1]
         # 延时30ms
         time.sleep(0.03)
 
@@ -487,6 +489,8 @@ def main():
     global s10_matched_angle
     global recv_mess
     count = 0
+    size = 11
+    process_buff=[]
     mydb = mysql.connector.connect(
         host=db_host,
         user="root",
@@ -508,6 +512,33 @@ def main():
             print("Raw_CH1_data:{:.15f}\nRaw_CH2_data:{:.15f}\nRaw_CH3_data:{:.15f}\nRaw_CH4_data:{:.15f}".format(
                 decoded_data[0], decoded_data[1], decoded_data[2], decoded_data[3]))
             s10_matched_angle = SelectAngle(decoded_data[0], decoded_data[1], decoded_data[2], decoded_data[3])
+
+            process_buff.append(s10_matched_angle)
+
+            if len(process_buff) >= size:
+                buff_std = np.std(process_buff)
+                buff_mean = np.mean(process_buff)
+
+                loss = abs(s10_matched_angle- buff_mean)
+
+
+                if loss > 10:
+                    #                         print('++++++++\n++++++++\n')
+
+                    if s10_matched_angle - np.mean(process_buff) < 0:
+                        process_buff.pop()
+
+                        process_buff.append(process_buff[-1] - 1)
+
+                    if s10_matched_angle - np.mean(process_buff) > 0:
+                        process_buff.pop()
+
+                        process_buff.append(process_buff[-1] + 1)
+                print(process_buff)
+                process_buff.pop(0)
+
+            s10_matched_angle = process_buff[-1]
+
             print('s10_matched_angle:', s10_matched_angle)
             # # 求平均，平滑数据
             # matched_angle_buff = []

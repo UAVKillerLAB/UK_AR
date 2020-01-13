@@ -39,6 +39,6 @@ webbrowser.open(url2)
 mydb = mysql.connector.connect(
     host="localhost",
     user="root",
-    passwd="LYD618618",
+    passwd="123456",
     database="UAV_test"
 )

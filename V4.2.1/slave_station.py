@@ -1,6 +1,8 @@
 # encoding=utf-8
 import socket  # 引入套接字
 import threading  # 引入并行
+
+import numpy as np
 import pymysql
 import struct
 import serial
@@ -272,6 +274,8 @@ def USB_recv():
     ser.open()
     num = 66
     count = 0
+    size = 11
+    process_buff = []
     global matched_angle_buff
     global matched_angle_mid
     global run_flag
@@ -301,6 +305,33 @@ def USB_recv():
             #
             #     matched_angle_mid = sum(matched_angle_buff) / (len(matched_angle_buff) * 1.0)  # 求平均，平滑数据
             #     matched_angle_buff = []
+            process_buff.append(matched_angle)
+
+            if len(process_buff) >= size:
+                buff_std = np.std(process_buff)
+                buff_mean = np.mean(process_buff)
+
+                loss = abs(matched_angle- buff_mean)
+
+
+                if loss > 10:
+                    #                         print('++++++++\n++++++++\n')
+
+                    if matched_angle - np.mean(process_buff) < 0:
+                        process_buff.pop()
+
+                        process_buff.append(process_buff[-1] - 1)
+
+                    if matched_angle - np.mean(process_buff) > 0:
+                        process_buff.pop()
+
+                        process_buff.append(process_buff[-1] + 1)
+                print(process_buff)
+                process_buff.pop(0)
+
+            matched_angle = process_buff[-1]
+
+
 
             udp_send(udp_socket, matched_angle)
             Print4(count, data[0], data[1], data[2], data[3], matched_angle)
@@ -351,12 +382,20 @@ def read_time():
     global run_flag
     while True:
         # 获取当前时间
-        nts[1] = int(time.strftime('%S', time.localtime(time.time())))
+        # nts[1] = int(time.strftime('%S', time.localtime(time.time())))
+        nts[1] = time.time()
         # 如果秒钟突变
-        if nts[1] != nts[0]:
+        # if nts[1] != nts[0]:
+
+        print('nts[1]:',nts[1])
+        print('nts[0]:',nts[0])
+        print('nts[1]-nts[0]:',nts[1]-nts[0])
+
+        if nts[1] - nts[0] >= 0.2:
             run_flag = 1
             # print(nts)
-        nts[0] = nts[1]
+            nts[0] = nts[1]
+        print('1')
         # 延时30ms
         time.sleep(0.03)
 
