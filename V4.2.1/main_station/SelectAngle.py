@@ -49,7 +49,7 @@ matched_angle_buff = []
 s10_matched_angle = 0
 
 angle_db_data = []
-angle_buffer = [math.pi/4, math.pi/4, 0, 0]
+angle_buffer = [math.pi / 4, math.pi / 4, 0, 0]
 recv_mess = []
 run_flag = 0
 
@@ -120,7 +120,7 @@ def fetch_data():
 
     global angle_db_data
     try:
-        conn = pymysql.connect(host=db_host, port=3306, db=db_name, user='root', passwd="123456",
+        conn = pymysql.connect(host=db_host, port=db_port, db=db_name, user=db_user, passwd=db_pwd,
                                charset='utf8')
         cs1 = conn.cursor()
         cs1.execute("select ch1 from final_table")
@@ -178,7 +178,7 @@ def SelectAngle(ch1_raw_data, ch2_raw_data, ch3_raw_data, ch4_raw_data):
     ch4_data = float(ch4_data)
     sum_difference = []
 
-    print("len(angle_db_data):",len(angle_db_data))
+    print("len(angle_db_data):", len(angle_db_data))
     for i in range(len(angle_db_data)):
         ch1ch2_difference = (20 * math.log((ch1_db_data[i] / ch2_db_data[i]), 10) - 20 * math.log((ch1_data / ch2_data),
                                                                                                   10)) ** 2  # 差值放大
@@ -197,7 +197,7 @@ def SelectAngle(ch1_raw_data, ch2_raw_data, ch3_raw_data, ch4_raw_data):
     global Process_data
     Last_rawdata = Process_data
     Process_data = sum_difference.index(min(sum_difference))
-    Process_data=angle_db_data[Process_data]
+    Process_data = angle_db_data[Process_data]
     result = DataProcess(count_time, Process_data, Last_rawdata)
 
     count_time += 1
@@ -208,7 +208,7 @@ def SelectAngle(ch1_raw_data, ch2_raw_data, ch3_raw_data, ch4_raw_data):
 def init():
     global ser, usb_data_len, udp_socket, usb_com, db_host, db_name, db_pwd, db_user, db_port, pc_host, pc_port, \
         s10_correction_angle, s8_correction_angle, station10_latitude, station10_longitude, station8_latitude, \
-        station8_longitude, baseline_ange
+        station8_longitude, baseline_angle, DISTANCE_S10_S8
     print("读取config.json......")
     # Reading data from file
     with open("config.json", 'r') as f:
@@ -224,16 +224,16 @@ def init():
         print("COM：", usb_com)
         station10_latitude = config_json_data["station10_latitude"]
         station10_longitude = config_json_data["station10_longitude"]
-        print("主站经纬度：({},{})".format(station10_latitude,station10_longitude))
+        print("主站经纬度：({},{})".format(station10_latitude, station10_longitude))
         station8_latitude = config_json_data["station8_latitude"]
         station8_longitude = config_json_data["station8_longitude"]
-        print("一站经纬度：({},{})".format(station8_latitude,station8_longitude))
+        print("一站经纬度：({},{})".format(station8_latitude, station8_longitude))
         s10_correction_angle = config_json_data["s10_correction_angle"]
         print("主站0°方位角：" + str(s10_correction_angle))
         s8_correction_angle = config_json_data["s8_correction_angle"]
         print("一站0°方位角：" + str(s8_correction_angle))
-        baseline_ange = config_json_data["baseline_ange"]
-        print("基准线方位角：" + str(baseline_ange))
+        baseline_angle = config_json_data["baseline_angle"]
+        print("基准线方位角：" + str(baseline_angle))
         DISTANCE_S10_S8 = config_json_data["DISTANCE_S10_S8"]
         print("两站水平距离差：" + str(DISTANCE_S10_S8))
         print("\n读取成功！\n")
@@ -293,27 +293,12 @@ def positioning(station10_angle, station8_angle, station10_correction, station8_
     station10_latitude = float(station10_latitude)
     station10_longitude = float(station10_longitude)
     station10_correction = int(station10_correction)
-    # direction_Zh = ["东偏南", "南偏西", "西偏北", "北偏东"]
     direction_Zh = ["北偏东", "东偏南", "南偏西", "西偏北"]
-    """
-    DISTANCE_S10_S8, ANGLE_A, ANGLE_B需要确定
-    """
-    # DISTANCE_S10_S8 = 398
-    # ANGLE_A = 69
-    # ANGLE_B = 21
-    # DISTANCE_S10_S8 = Geodesic.WGS84.Inverse(station10_latitude, station10_longitude, station8_latitude, station8_longitude)["s12"]
-    DISTANCE_S10_S8 = 35.2
-    # ANGLE_A = 25
-    # ANGLE_B = 65
-    # 一顿计算
     """
     两站与目标构成的三角形的内角
     angle_alpha:alpha为主站角
     angle_beta:beta为一站角
     """
-    # angle_alpha = math.radians(station10_correction - 180 + station10_angle - ANGLE_A)
-    # angle_beta = math.radians(station8_correction - 90 + station8_angle - ANGLE_B)
-    # print(180 - station10_angle - ANGLE_A, station8_angle - ANGLE_B)
     angle_alpha = math.radians(180 - (station10_angle + s10_correction_angle - baseline_angle))
     angle_beta = math.radians(station8_angle + s8_correction_angle - baseline_angle)
 
@@ -329,7 +314,6 @@ def positioning(station10_angle, station8_angle, station10_correction, station8_
 
     distance_s10_target = (math.sin(angle_beta) * DISTANCE_S10_S8) / (math.sin(math.pi - angle_alpha - angle_beta))
     distance_s8_target = (math.sin(angle_alpha) * DISTANCE_S10_S8) / (math.sin(math.pi - angle_alpha - angle_beta))
-    # return distance_s10_target, distance_s8_target
     # 获取每一经度间的距离（单位：米）
     longitude_distance = (Geodesic.WGS84.Inverse(station10_latitude, 104.00001, station10_latitude, 104.00002)[
         "s12"]) * 100000
@@ -444,8 +428,6 @@ def positioning(station10_angle, station8_angle, station10_correction, station8_
     target_latitude = (s10_target_latitude + s8_target_latitude) / 2
     target_longitude = (s10_target_longitude + s8_target_longitude) / 2
     print("目标WGS84坐标({},{})".format(target_latitude, target_longitude))
-    temp = time.strftime("%H%M%S")
-    # write_csv(temp, target_latitude, target_longitude)
     return target_latitude, target_longitude, station10_angle, distance_s10_target, station8_angle, distance_s8_target
 
 
@@ -495,15 +477,7 @@ def main():
     global recv_mess
     count = 0
     size = 11
-    process_buff=[]
-    mydb = mysql.connector.connect(
-        host=db_host,
-        user="root",
-        passwd="123456",
-        database="UAV_test",
-        charset='utf8'
-    )
-    mycursor = mydb.cursor()
+    process_buff = []
     t = threading.Thread(target=udp_recv, args=(udp_socket,))
     t1 = threading.Thread(target=read_time)
     t.start()
@@ -524,8 +498,7 @@ def main():
                 buff_std = np.std(process_buff)
                 buff_mean = np.mean(process_buff)
 
-                loss = abs(s10_matched_angle- buff_mean)
-
+                loss = abs(s10_matched_angle - buff_mean)
 
                 if loss > 10:
                     #                         print('++++++++\n++++++++\n')
@@ -564,14 +537,23 @@ def main():
             """
             s8_matched_angle = recv_mess[0]
             time10 = time.time()
-            save = positioning(s10_matched_angle, s8_matched_angle, s10_correction_angle, s8_correction_angle, station10_latitude,
-                               station10_longitude)
+            save = positioning(s10_matched_angle, s8_matched_angle, s10_correction_angle, s8_correction_angle,
+                               station10_latitude, station10_longitude, station8_latitude, station8_longitude,
+                               baseline_angle, DISTANCE_S10_S8)
             print("\n\n")
-            sql = "INSERT INTO test (latitude, longitude, angle10, distance10, angle8, distance8, time10, time8) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"
-            val = (save[0], save[1], save[2], save[3], save[4], save[5], time10, recv_mess[1])
-            mycursor.execute(sql, val)
-            mydb.commit()
-
+            try:
+                conn = pymysql.connect(host=db_host, port=db_port, db=db_name, user=db_user, passwd=db_pwd,
+                                       charset='utf8')
+                cs1 = conn.cursor()
+                sql = "INSERT INTO test (latitude, longitude, angle10, distance10, angle8, distance8, time10, time8) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"
+                val = (save[0], save[1], save[2], save[3], save[4], save[5], time10, recv_mess[1])
+                cs1.execute(sql, val)
+                conn.commit()
+                cs1.close()
+                conn.close()
+            except Exception as e:
+                print(e)
+                pass
 
 if __name__ == '__main__':
     main()
