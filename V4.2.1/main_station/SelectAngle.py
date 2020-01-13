@@ -1,10 +1,9 @@
 # encoding=utf-8
+
 import json
-import os
 import socket  # 引入套接字
 import threading  # 引入并行
 import time
-
 import numpy as np
 import pymysql
 import struct
@@ -12,17 +11,8 @@ import serial
 import matplotlib.pyplot as plt
 import datetime
 import math
-import sys
 from geographiclib.geodesic import Geodesic
-import configparser
-import csv
-import mysql.connector
 
-# import comm_udp_serial
-
-# sys.path.append(r'D:\OneDrive\Python_project\Github\AntiUAV_Python\Python')
-
-# from DBInfo import *
 
 plt.ion()  # 开启一个画图的窗口
 ax1 = []  # 定义一个 x 轴的空列表用来接收动态的数据
@@ -83,8 +73,8 @@ def Print4(counnt, ch1_data, ch2_data, ch3_data, ch4_data, angle):
     plt.xlabel("Time")
     plt.ylabel("Angle")
     plt.grid(True)
-    plt.pause(0.08)  # 暂停一秒
-    # plt.ioff()                   # 关闭画图的窗口
+    plt.pause(0.08) # 暂停一秒
+    # plt.ioff()    # 关闭画图的窗口
 
 
 def DataProcess(count, angle_now, angle_last):
@@ -92,8 +82,6 @@ def DataProcess(count, angle_now, angle_last):
         return angle_now
     else:
         if abs(angle_now - angle_last) >= 20:
-            # print("平均")
-            # result = (angle1 + angle2) / 2
             if angle_now - angle_last > 0:
                 return angle_last + 10
             if angle_now - angle_last < 0:
@@ -135,9 +123,7 @@ def fetch_data():
         cs1.execute("select angle from final_table")
         result5 = cs1.fetchall()
         # print(result1)
-        # print(result2)
-        # print(result3)
-        # print(result4)
+
         for i in range(len(result5)):
             ch1_db_data.append(float((result1[i])[0]))
             ch2_db_data.append(float((result2[i])[0]))
@@ -187,10 +173,6 @@ def SelectAngle(ch1_raw_data, ch2_raw_data, ch3_raw_data, ch4_raw_data):
         ch3ch4_difference = (20 * math.log((ch3_db_data[i] / ch4_db_data[i]), 10) - 20 * math.log((ch3_data / ch4_data),
                                                                                                   10)) ** 2  # 差值放大
         sum_difference.append(ch1ch2_difference + ch2ch3_difference + ch3ch4_difference)
-    # print(sum_difference)
-    # print(min(sum_difference))
-    # print(sum_difference.index(min(sum_difference)))
-    # return sum_difference.index(min(sum_difference))
 
     global count_time
     global Last_rawdata
@@ -237,7 +219,6 @@ def init():
         DISTANCE_S10_S8 = config_json_data["DISTANCE_S10_S8"]
         print("两站水平距离差：" + str(DISTANCE_S10_S8))
         print("\n读取成功！\n")
-    # create_csv()
     ser = serial.Serial(usb_com, 115200)
     ser.close()
     ser.open()
@@ -247,29 +228,6 @@ def init():
     udp_socket.bind(("", pc_port))  # 服务器绑定ip和端口
     # 问题描述：套接字必须发送一次才能接收
     udp_socket.sendto("1".encode("utf-8"), ('192.168.3.100', 8080))
-
-
-# def create_csv():
-#     global csv_name
-#     if os.path.exists("location_info"):
-#         pass
-#     else:
-#         os.mkdir("location_info")
-#     os.chdir("location_info")
-#     temp = time.strftime("%Y%m%d%H%M")
-#     csv_name = temp + ".csv"
-#     with open(csv_name, 'w', newline='') as f:
-#         csv_write = csv.writer(f)
-#         csv_head = ["time", "latitude", "longitude"]
-#         csv_write.writerow(csv_head)
-#         print("创建成功！")
-
-
-# def write_csv(time, latitude, longitude):
-#     with open(csv_name, 'a+', newline='') as f:
-#         csv_write = csv.writer(f)
-#         data_row = [time, latitude, longitude]
-#         csv_write.writerow(data_row)
 
 
 def positioning(station10_angle, station8_angle, station10_correction, station8_correction, station10_latitude,
@@ -317,7 +275,6 @@ def positioning(station10_angle, station8_angle, station10_correction, station8_
     # 获取每一经度间的距离（单位：米）
     longitude_distance = (Geodesic.WGS84.Inverse(station10_latitude, 104.00001, station10_latitude, 104.00002)[
         "s12"]) * 100000
-    # print("longitude_distance", longitude_distance)
     LATITUDE_DISTANCE = 110946.304
 
     # 统一极坐标系
@@ -375,7 +332,6 @@ def positioning(station10_angle, station8_angle, station10_correction, station8_
                                                      distance_s10_target))
     # 统一极坐标系
     azimuth = (station8_angle + station8_correction) % 360
-    # print(azimuth)
     # 通过方位角判断方向
     if 0 < azimuth <= 90:
         direction_flag = 0
@@ -554,6 +510,7 @@ def main():
             except Exception as e:
                 print(e)
                 pass
+
 
 if __name__ == '__main__':
     main()
