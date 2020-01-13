@@ -1,10 +1,10 @@
 # encoding=utf-8
 
 import json
-import socket  # 引入套接字
+import socket # 引入套接字
 import threading  # 引入并行
 import time
-import numpy as np
+from numpy import mean
 import pymysql
 import struct
 import serial
@@ -12,6 +12,7 @@ import matplotlib.pyplot as plt
 import datetime
 import math
 from geographiclib.geodesic import Geodesic
+# Geodesic.WGS84.Inverse
 
 
 plt.ion()  # 开启一个画图的窗口
@@ -451,20 +452,19 @@ def main():
             process_buff.append(s10_matched_angle)
 
             if len(process_buff) >= size:
-                buff_std = np.std(process_buff)
-                buff_mean = np.mean(process_buff)
+                buff_mean = mean(process_buff)
 
                 loss = abs(s10_matched_angle - buff_mean)
 
                 if loss > 10:
                     #                         print('++++++++\n++++++++\n')
 
-                    if s10_matched_angle - np.mean(process_buff) < 0:
+                    if s10_matched_angle - mean(process_buff) < 0:
                         process_buff.pop()
 
                         process_buff.append(process_buff[-1] - 1)
 
-                    if s10_matched_angle - np.mean(process_buff) > 0:
+                    if s10_matched_angle - mean(process_buff) > 0:
                         process_buff.pop()
 
                         process_buff.append(process_buff[-1] + 1)
