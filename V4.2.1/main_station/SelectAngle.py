@@ -234,6 +234,8 @@ def init():
         print("一站0°方位角：" + str(s8_correction_angle))
         baseline_ange = config_json_data["baseline_ange"]
         print("基准线方位角：" + str(baseline_ange))
+        DISTANCE_S10_S8 = config_json_data["DISTANCE_S10_S8"]
+        print("两站水平距离差：" + str(DISTANCE_S10_S8))
         print("\n读取成功！\n")
     # create_csv()
     ser = serial.Serial(usb_com, 115200)
@@ -271,7 +273,7 @@ def init():
 
 
 def positioning(station10_angle, station8_angle, station10_correction, station8_correction, station10_latitude,
-                station10_longitude, station8_latitude, station8_longitude, baseline_angle):
+                station10_longitude, station8_latitude, station8_longitude, baseline_angle, DISTANCE_S10_S8):
     """
     :param station10_angle: 主站方位角
     :param station8_angle: 主站修正角
