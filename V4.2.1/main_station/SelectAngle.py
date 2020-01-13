@@ -206,7 +206,9 @@ def SelectAngle(ch1_raw_data, ch2_raw_data, ch3_raw_data, ch4_raw_data):
 
 
 def init():
-    global ser, usb_data_len, udp_socket, usb_com, db_host, db_name, db_pwd, db_user, db_port, pc_host, pc_port, s10_correction_angle, s8_correction_angle, station10_latitude, station10_longitude, station8_latitude, station8_longitude
+    global ser, usb_data_len, udp_socket, usb_com, db_host, db_name, db_pwd, db_user, db_port, pc_host, pc_port, \
+        s10_correction_angle, s8_correction_angle, station10_latitude, station10_longitude, station8_latitude, \
+        station8_longitude, baseline_ange
     print("读取config.json......")
     # Reading data from file
     with open("config.json", 'r') as f:
@@ -230,6 +232,8 @@ def init():
         print("主站0°方位角：" + str(s10_correction_angle))
         s8_correction_angle = config_json_data["s8_correction_angle"]
         print("一站0°方位角：" + str(s8_correction_angle))
+        baseline_ange = config_json_data["baseline_ange"]
+        print("基准线方位角：" + str(baseline_ange))
         print("\n读取成功！\n")
     # create_csv()
     ser = serial.Serial(usb_com, 115200)
@@ -267,7 +271,7 @@ def init():
 
 
 def positioning(station10_angle, station8_angle, station10_correction, station8_correction, station10_latitude,
-                station10_longitude):
+                station10_longitude, station8_latitude, station8_longitude, baseline_angle):
     """
     :param station10_angle: 主站方位角
     :param station8_angle: 主站修正角
@@ -284,7 +288,6 @@ def positioning(station10_angle, station8_angle, station10_correction, station8_
     一定要区别于方向角。
     定义:方向角指的是采用某坐标轴方向作为标准方向所确定的方位角。有时，方向角是从正北或正南方向到目标方向所形成的小于九十度的角。
     """
-    global station8_latitude, station8_longitude
     station10_latitude = float(station10_latitude)
     station10_longitude = float(station10_longitude)
     station10_correction = int(station10_correction)
@@ -309,8 +312,8 @@ def positioning(station10_angle, station8_angle, station10_correction, station8_
     # angle_alpha = math.radians(station10_correction - 180 + station10_angle - ANGLE_A)
     # angle_beta = math.radians(station8_correction - 90 + station8_angle - ANGLE_B)
     # print(180 - station10_angle - ANGLE_A, station8_angle - ANGLE_B)
-    angle_alpha = math.radians(180 - station10_angle)
-    angle_beta = math.radians(station8_angle)
+    angle_alpha = math.radians(180 - (station10_angle + s10_correction_angle - baseline_angle))
+    angle_beta = math.radians(station8_angle + s8_correction_angle - baseline_angle)
 
     # 剔除异常值
     angle_buffer[2] = angle_alpha
