@@ -208,6 +208,7 @@ def init():
         station10_latitude = config_json_data["station10_latitude"]
         station10_longitude = config_json_data["station10_longitude"]
         print("主站经纬度：({},{})".format(station10_latitude, station10_longitude))
+
         station8_latitude = config_json_data["station8_latitude"]
         station8_longitude = config_json_data["station8_longitude"]
         print("一站经纬度：({},{})".format(station8_latitude, station8_longitude))
@@ -215,8 +216,6 @@ def init():
         print("主站0°方位角：" + str(s10_correction_angle))
         s8_correction_angle = config_json_data["s8_correction_angle"]
         print("一站0°方位角：" + str(s8_correction_angle))
-        baseline_angle = config_json_data["baseline_angle"]
-        print("基准线方位角：" + str(baseline_angle))
         DISTANCE_S10_S8 = config_json_data["DISTANCE_S10_S8"]
         print("两站水平距离差：" + str(DISTANCE_S10_S8))
         print("\n读取成功！\n")
@@ -229,6 +228,9 @@ def init():
     udp_socket.bind(("", pc_port))  # 服务器绑定ip和端口
     # 问题描述：套接字必须发送一次才能接收
     udp_socket.sendto("1".encode("utf-8"), ('192.168.3.100', 8080))
+    baseline_angle = math.degrees(math.atan(abs(station10_longitude - station8_longitude)
+                                            / abs(station10_latitude - station8_latitude)))
+    print("基准线方位角：" + str(baseline_angle))
 
 
 def positioning(station10_angle, station8_angle, station10_correction, station8_correction, station10_latitude,
