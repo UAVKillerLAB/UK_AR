@@ -212,6 +212,7 @@ def init():
         station8_latitude = config_json_data["station8_latitude"]
         station8_longitude = config_json_data["station8_longitude"]
         print("一站经纬度：({},{})".format(station8_latitude, station8_longitude))
+
         s10_correction_angle = config_json_data["s10_correction_angle"]
         print("主站0°方位角：" + str(s10_correction_angle))
         s8_correction_angle = config_json_data["s8_correction_angle"]
