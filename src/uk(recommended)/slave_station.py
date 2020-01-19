@@ -258,16 +258,6 @@ def udp_recv(udp_socket):
     udp_socket.close()
 
 
-def get_host_ip():
-    try:
-        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        s.connect(('8.8.8.8', 80))
-        ip = s.getsockname()[0]
-    finally:
-        s.close()
-    return ip
-
-
 def USB_recv():
     ser = serial.Serial("COM5", 115200)
     ser.close()
@@ -311,8 +301,7 @@ def USB_recv():
                 buff_std = np.std(process_buff)
                 buff_mean = np.mean(process_buff)
 
-                loss = abs(matched_angle- buff_mean)
-
+                loss = abs(matched_angle - buff_mean)
 
                 if loss > 10:
                     #                         print('++++++++\n++++++++\n')
@@ -330,8 +319,6 @@ def USB_recv():
                 process_buff.pop(0)
 
             matched_angle = process_buff[-1]
-
-
 
             udp_send(udp_socket, matched_angle)
             Print4(count, data[0], data[1], data[2], data[3], matched_angle)
@@ -365,16 +352,6 @@ def GetInfo():
     else:
         print(DB_Name)
         pass
-    # while True:
-    #     distance = input("距离：")
-    #     if distance != "":
-    #         break
-    #     else:
-    #         print("\033[31m请输入距离!\033[0m")
-    # NowTime = datetime.datetime.now().strftime('%Y%m%d%H%M')
-    # PC_IPAddr = get_host_ip()
-    # PC_Port = 8080
-    # TableName = "m" + distance + "d" + NowTime
 
 
 def read_time():
@@ -387,9 +364,9 @@ def read_time():
         # 如果秒钟突变
         # if nts[1] != nts[0]:
 
-        print('nts[1]:',nts[1])
-        print('nts[0]:',nts[0])
-        print('nts[1]-nts[0]:',nts[1]-nts[0])
+        print('nts[1]:', nts[1])
+        print('nts[0]:', nts[0])
+        print('nts[1]-nts[0]:', nts[1] - nts[0])
 
         if nts[1] - nts[0] >= 0.2:
             run_flag = 1
@@ -408,10 +385,9 @@ def main():
     global udp_socket
     global matched_angle
 
-    PC_IPAddr = get_host_ip()
     PC_Port = 8080
     udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)  # 创建套接字
-    udp_socket.bind((PC_IPAddr, PC_Port))  # 服务器绑定ip和端口
+    udp_socket.bind(("", PC_Port))  # 服务器绑定ip和端口
 
     # 接收数据
     # t = threading.Thread(target=udp_recv, args=(udp_socket,))
