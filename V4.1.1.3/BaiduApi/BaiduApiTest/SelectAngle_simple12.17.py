@@ -18,7 +18,7 @@ import csv
 
 # import comm_udp_serial
 
-# sys.path.append(r'D:\OneDrive\Python_project\Github\AntiUAV_Python\Python')
+# sys.path.append(r'D:\OneDrive\Python_project\Github\AntiUAV_Python\test')
 
 # from DBInfo import *
 
