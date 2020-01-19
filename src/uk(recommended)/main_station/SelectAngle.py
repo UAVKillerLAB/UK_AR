@@ -12,7 +12,6 @@ import matplotlib.pyplot as plt
 import datetime
 import math
 from geographiclib.geodesic import Geodesic
-# Geodesic.WGS84.Inverse
 
 
 plt.ion()  # 开启一个画图的窗口
