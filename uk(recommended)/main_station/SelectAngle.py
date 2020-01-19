@@ -44,7 +44,7 @@ recv_mess = []
 run_flag = 0
 
 
-def Print4(counnt, ch1_data, ch2_data, ch3_data, ch4_data, angle):
+def print4(counnt, ch1_data, ch2_data, ch3_data, ch4_data, angle):
     data = datetime.date.today()
     plt.figure("4 Channel&Matched Angle" + str(data))
     ax2.append(counnt)  # 添加 i 到 x 轴的数据中
@@ -77,7 +77,7 @@ def Print4(counnt, ch1_data, ch2_data, ch3_data, ch4_data, angle):
     # plt.ioff()    # 关闭画图的窗口
 
 
-def DataProcess(count, angle_now, angle_last):
+def data_process(count, angle_now, angle_last):
     if count == 0:
         return angle_now
     else:
@@ -90,7 +90,7 @@ def DataProcess(count, angle_now, angle_last):
             return angle_now
 
 
-def Print1(counnt, ch_data):
+def print1(counnt, ch_data):
     ax1.append(counnt)  # 添加 i 到 x 轴的数据中
     ach.append(ch_data)
 
@@ -101,6 +101,9 @@ def Print1(counnt, ch_data):
 
 
 def fetch_data():
+    """
+    :return: 用于获取数据库的拟合表
+    """
     global ch1_db_data
     global ch2_db_data
     global ch3_db_data
@@ -122,7 +125,6 @@ def fetch_data():
 
         cs1.execute("select angle from final_table")
         result5 = cs1.fetchall()
-        # print(result1)
 
         for i in range(len(result5)):
             ch1_db_data.append(float((result1[i])[0]))
@@ -130,7 +132,6 @@ def fetch_data():
             ch3_db_data.append(float((result3[i])[0]))
             ch4_db_data.append(float((result4[i])[0]))
             angle_db_data.append(float((result5[i])[0]))
-        # print(result1[0])
         conn.commit()
         cs1.close()
         conn.close()
@@ -139,7 +140,7 @@ def fetch_data():
         pass
 
 
-def SelectAngle(ch1_raw_data, ch2_raw_data, ch3_raw_data, ch4_raw_data):
+def select_angle(ch1_raw_data, ch2_raw_data, ch3_raw_data, ch4_raw_data):
     """
     :param ch1_raw_data: 通道一数据
     :param ch2_raw_data: 通道二数据
@@ -148,7 +149,7 @@ def SelectAngle(ch1_raw_data, ch2_raw_data, ch3_raw_data, ch4_raw_data):
     :return: result:查表得到的角度值
     """
     global ch1ch2diff_db_data, ch2ch3diff_db_data, ch3ch4diff_db_data, ch4_db_data, count_time, Last_rawdata, Process_data
-    # 归一化
+    # 归一化,四个通道同时除以最小值
     min_ch_data = min(ch1_raw_data, ch2_raw_data, ch3_raw_data, ch4_raw_data)
     min_ch_data = float(min_ch_data)
     ch1_data = float(ch1_raw_data) / min_ch_data
@@ -180,7 +181,7 @@ def SelectAngle(ch1_raw_data, ch2_raw_data, ch3_raw_data, ch4_raw_data):
     Last_rawdata = Process_data
     Process_data = sum_difference.index(min(sum_difference))
     Process_data = angle_db_data[Process_data]
-    result = DataProcess(count_time, Process_data, Last_rawdata)
+    result = data_process(count_time, Process_data, Last_rawdata)
 
     count_time += 1
 
@@ -188,11 +189,16 @@ def SelectAngle(ch1_raw_data, ch2_raw_data, ch3_raw_data, ch4_raw_data):
 
 
 def init():
+    """
+    初始化。
+    将所有全局常量写入内存，具体常量见config.json
+    :return: None
+    """
     global ser, usb_data_len, udp_socket, usb_com, db_host, db_name, db_pwd, db_user, db_port, pc_host, pc_port, \
         s10_correction_angle, s8_correction_angle, station10_latitude, station10_longitude, station8_latitude, \
         station8_longitude, baseline_angle, DISTANCE_S10_S8
     print("读取config.json......")
-    # Reading data from file
+    # Reading data from config file
     with open("../config/config.json", 'r') as f:
         config_json_data = json.load(f)
         db_host = config_json_data["db_host"]
@@ -228,6 +234,7 @@ def init():
     udp_socket.bind(("", pc_port))  # 服务器绑定ip和端口
     # 问题描述：套接字必须发送一次才能接收
     udp_socket.sendto("1".encode("utf-8"), ('192.168.3.100', 8080))
+    # 利用两直角边关系解出基准线角度
     baseline_angle = math.degrees(math.atan(abs(station10_longitude - station8_longitude)
                                             / abs(station10_latitude - station8_latitude)))
     print("基准线方位角：" + str(baseline_angle))
@@ -236,18 +243,22 @@ def init():
 def positioning(station10_angle, station8_angle, station10_correction, station8_correction, station10_latitude,
                 station10_longitude, station8_latitude, station8_longitude, baseline_angle, DISTANCE_S10_S8):
     """
+    定位函数
     :param station10_angle: 主站方位角
-    :param station8_angle: 主站修正角
-    :param station10_correction: 一站方位角
+    :param station8_angle: 一站方位角
+    :param station10_correction: 主站修正角
     :param station8_correction: 一站修正角
     :param station10_latitude: 主站纬度
     :param station10_longitude: 主站经度
-    :return:none
+    :param station8_latitude: 一站经度
+    :param station8_longitude: 一站经度
+    :param baseline_angle: 基准线角度
+    :param DISTANCE_S10_S8: 主站与一战距离
+    :return: 目标经纬度
     """
     """
     修正角为地理学上的方位角。
     定义:从标准方向的北端起,顺时针方向到直线的水平角称为该直线的方位角。方位角的取值范围为0°～360°。
-
     一定要区别于方向角。
     定义:方向角指的是采用某坐标轴方向作为标准方向所确定的方位角。有时，方向角是从正北或正南方向到目标方向所形成的小于九十度的角。
     """
@@ -259,11 +270,13 @@ def positioning(station10_angle, station8_angle, station10_correction, station8_
     两站与目标构成的三角形的内角
     angle_alpha:alpha为主站角
     angle_beta:beta为一站角
+    算法基于AOA
     """
     angle_alpha = math.radians(180 - (station10_angle + s10_correction_angle - baseline_angle))
     angle_beta = math.radians(station8_angle + s8_correction_angle - baseline_angle)
 
-    # 剔除异常值
+    # 在任何情况下都将最新实测角度覆盖到2、3元素
+    # 由以下条件判断输出哪两个元素
     angle_buffer[2] = angle_alpha
     angle_buffer[3] = angle_beta
     if angle_alpha + angle_beta >= math.pi:
@@ -272,15 +285,15 @@ def positioning(station10_angle, station8_angle, station10_correction, station8_
         angle_beta = angle_buffer[1]
     angle_buffer[0] = angle_alpha
     angle_buffer[1] = angle_beta
-
+    # 基于正弦定理，由两角一边求两边长
     distance_s10_target = (math.sin(angle_beta) * DISTANCE_S10_S8) / (math.sin(math.pi - angle_alpha - angle_beta))
     distance_s8_target = (math.sin(angle_alpha) * DISTANCE_S10_S8) / (math.sin(math.pi - angle_alpha - angle_beta))
     # 获取每一经度间的距离（单位：米）
-    longitude_distance = (Geodesic.WGS84.Inverse(station10_latitude, 104.00001, station10_latitude, 104.00002)[
-        "s12"]) * 100000
+    longitude_distance = (Geodesic.WGS84.Inverse(station10_latitude, 104.000001, station10_latitude, 104.000002)[
+        "s12"]) * 1000000
     LATITUDE_DISTANCE = 110946.304
 
-    # 统一极坐标系
+    # 统一为极坐标系
     azimuth = (station10_angle + station10_correction) % 360
     print(azimuth)
     # 通过方位角判断方向
@@ -296,7 +309,8 @@ def positioning(station10_angle, station8_angle, station10_correction, station8_
     elif 270 < azimuth <= 360:
         direction_flag = 3
         target_direction = azimuth - 270
-
+    # 以下代码可优化。
+    # 具体做法是将方位角转化为极坐标系的极角后，其xy轴的分量就是cos sin的值，同时为经度 纬度上的变化量
     # 北偏东
     if direction_flag == 0:
         # 计算纬度方向和经度方向的长度改变量
@@ -333,7 +347,7 @@ def positioning(station10_angle, station8_angle, station10_correction, station8_
     print("获取主站角度{}°\n目标在主站 {}{}° 方向，距离 {} 米".format(station10_angle, direction_Zh[direction_flag],
                                                      target_direction,
                                                      distance_s10_target))
-    # 统一极坐标系
+    # 统一为极坐标系
     azimuth = (station8_angle + station8_correction) % 360
     # 通过方位角判断方向
     if 0 < azimuth <= 90:
@@ -390,7 +404,7 @@ def positioning(station10_angle, station8_angle, station10_correction, station8_
     return target_latitude, target_longitude, station10_angle, distance_s10_target, station8_angle, distance_s8_target
 
 
-def USB_recv(ser, usb_data_len):
+def usb_recv(ser, usb_data_len):
     # 解析数据
     USB_recv_data = ((ser.read(usb_data_len)).decode('ASCII')).replace("\r\n", "")
     USB_recv_data = bytes(USB_recv_data, encoding="utf8")
@@ -446,49 +460,30 @@ def main():
         if run_flag == 1:
             run_flag = 0
             count += 1
-            decoded_data = USB_recv(ser, usb_data_len)
+            decoded_data = usb_recv(ser, usb_data_len)
             print("Raw_CH1_data:{:.15f}\nRaw_CH2_data:{:.15f}\nRaw_CH3_data:{:.15f}\nRaw_CH4_data:{:.15f}".format(
                 decoded_data[0], decoded_data[1], decoded_data[2], decoded_data[3]))
-            s10_matched_angle = SelectAngle(decoded_data[0], decoded_data[1], decoded_data[2], decoded_data[3])
+            s10_matched_angle = select_angle(decoded_data[0], decoded_data[1], decoded_data[2], decoded_data[3])
 
             process_buff.append(s10_matched_angle)
 
             if len(process_buff) >= size:
                 buff_mean = mean(process_buff)
-
                 loss = abs(s10_matched_angle - buff_mean)
-
                 if loss > 10:
-                    #                         print('++++++++\n++++++++\n')
-
                     if s10_matched_angle - mean(process_buff) < 0:
                         process_buff.pop()
-
                         process_buff.append(process_buff[-1] - 1)
-
                     if s10_matched_angle - mean(process_buff) > 0:
                         process_buff.pop()
-
                         process_buff.append(process_buff[-1] + 1)
                 print(process_buff)
                 process_buff.pop(0)
-
             s10_matched_angle = process_buff[-1]
-
             print('s10_matched_angle:', s10_matched_angle)
-            # # 求平均，平滑数据
-            # matched_angle_buff = []
+            # 求平均，平滑数据
             matched_angle_buff.append(s10_matched_angle)
-
-            # test_count=test_count+1
-            # if len(matched_angle_buff) >= 5:
-            #     matched_angle_mid = sum(matched_angle_buff) / (len(matched_angle_buff) * 1.0)
-            #     matched_angle_buff = []  # 覆盖为一个没有元素的列表
-            #     test_count=0
-
-            # print('test_count',test_count)
-
-            Print4(count, decoded_data[0], decoded_data[1], decoded_data[2], decoded_data[3], s10_matched_angle)
+            print4(count, decoded_data[0], decoded_data[1], decoded_data[2], decoded_data[3], s10_matched_angle)
             print("当前角度为:{}".format(s10_matched_angle))
             """
             解算函数
@@ -498,9 +493,8 @@ def main():
             save = positioning(s10_matched_angle, s8_matched_angle, s10_correction_angle, s8_correction_angle,
                                station10_latitude, station10_longitude, station8_latitude, station8_longitude,
                                baseline_angle, DISTANCE_S10_S8)
-            print("\n\n")
             try:
-                conn = pymysql.connect(host=db_host, port=db_port, db=db_name, user=db_user, passwd=db_pwd,
+                conn = pymysql.connect(host=db_host, port=db_port, db="uav_test", user=db_user, passwd=db_pwd,
                                        charset='utf8')
                 cs1 = conn.cursor()
                 sql = "INSERT INTO test (latitude, longitude, angle10, distance10, angle8, distance8, time10, time8) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"
@@ -512,6 +506,7 @@ def main():
             except Exception as e:
                 print(e)
                 pass
+            print("\n\n")
 
 
 if __name__ == '__main__':
