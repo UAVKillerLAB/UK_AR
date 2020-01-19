@@ -1,10 +1,5 @@
-import socket  # 引入套接字
-import threading  # 引入并行
-import pymysql
 import struct
 import serial
-import datetime
-import matplotlib.pyplot as plt
 
 class Connection:
 
@@ -23,7 +18,12 @@ class Connection:
             data.append(int(("0x" + (USB_recv_data[32: 48].decode())), 16))
             data.append(int(("0x" + (USB_recv_data[48: 64].decode())), 16))
             # InsertAngelData(distance, data[0], data[1], data[2], data[3])
-            print("Raw_CH1_data:{:.15f}\nRaw_CH2_data:{:.15f}\nRaw_CH3_data:{:.15f}\nRaw_CH4_data:{:.15f}".format(data[0], data[1], data[2], data[3]))
+            print(
+                "Raw_CH1_data:{:.15f}\nRaw_CH2_data:{:.15f}\nRaw_CH3_data:{:.15f}\nRaw_CH4_data:{:.15f}".format(data[0],
+                                                                                                                data[1],
+                                                                                                                data[2],
+                                                                                                                data[
+                                                                                                                    3]))
 
     def udp_send(self):
         while True:
@@ -54,6 +54,7 @@ class Connection:
                 data[0], data[1], data[2], data[3]))
             # InsertAngelData(distance, data[0], data[1], data[2], data[3])
         self.close()
+
 
 if __name__ == '__main__':
     main()

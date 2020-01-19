@@ -1,6 +1,6 @@
 # encoding=utf-8
 import pymysql
-import time
+
 try:
     conn = pymysql.connect(host='192.168.3.6', port=3306, db='UAV1016', user='admin_0', passwd='asdfghjkl', charset='utf8')
     cs1 = conn.cursor()

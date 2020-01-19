@@ -15,8 +15,8 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
-from . import view  as gps_views
-from . import SelectAngle as SA
+from . import view as gps_views
+from . import read_angle as SA
 
 urlpatterns = [
     path('admin/', admin.site.urls),
