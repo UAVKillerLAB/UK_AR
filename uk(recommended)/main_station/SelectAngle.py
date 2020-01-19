@@ -193,7 +193,7 @@ def init():
         station8_longitude, baseline_angle, DISTANCE_S10_S8
     print("读取config.json......")
     # Reading data from file
-    with open("config.json", 'r') as f:
+    with open("../config/config.json", 'r') as f:
         config_json_data = json.load(f)
         db_host = config_json_data["db_host"]
         print("数据库IP地址：", db_host)
