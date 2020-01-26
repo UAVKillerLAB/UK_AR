@@ -253,7 +253,6 @@ def udp_recv(udp_socket):
         # Print1(count,SelectAngle(data[0], data[1], data[2], data[3]))
         print("当前角度为: %d°" % matched_angle)
         print("\n\n")
-    udp_socket.close()
 
 
 def main():
