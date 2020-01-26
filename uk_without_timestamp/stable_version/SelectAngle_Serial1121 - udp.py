@@ -258,9 +258,9 @@ def udp_recv(udp_socket):
 
 def main():
     GetInfo()
+    SelectData()
     a = input("Press any key to start.")
     print("等待接收数据")
-    SelectData()
     global udp_socket
     global matched_angle
 

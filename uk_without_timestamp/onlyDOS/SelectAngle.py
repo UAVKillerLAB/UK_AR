@@ -483,9 +483,9 @@ def udp_recv(udp_socket):
 
 def main():
     init()
+    fetch_data()
     input("Press any key to start.......")
     print("Waiting for data......")
-    fetch_data()
     global count
     count = 0
     while True:
