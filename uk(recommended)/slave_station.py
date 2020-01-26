@@ -113,7 +113,7 @@ def Print1(counnt, ch_data):
     plt.pause(0.1)
 
 
-def SelectData():
+def fetch_data():
     global ch1_db_data
     global ch2_db_data
     global ch3_db_data
@@ -154,7 +154,7 @@ def SelectData():
         pass
 
 
-def SelectAngle(ch1_raw_data, ch2_raw_data, ch3_raw_data, ch4_raw_data):
+def select_angle(ch1_raw_data, ch2_raw_data, ch3_raw_data, ch4_raw_data):
     # print("Raw_CH1_data:%.15f\nRaw_CH2_data:%.15f\nRaw_CH3_data:%.15f\nRaw_CH4_data:%.15f" % (
     # ch1_raw_data, ch2_raw_data, ch3_raw_data, ch4_raw_data))
     global ch1_db_data
@@ -250,15 +250,14 @@ def udp_recv(udp_socket):
         count = count + 1
         print("Raw_CH1_data:%.15f\nRaw_CH2_data:%.15f\nRaw_CH3_data:%.15f\nRaw_CH4_data:%.15f" % (
             data[0], data[1], data[2], data[3]))
-        matched_angle = SelectAngle(data[0], data[1], data[2], data[3])
+        matched_angle = select_angle(data[0], data[1], data[2], data[3])
         Print4(count, data[0], data[1], data[2], data[3], matched_angle)
         # Print1(count,SelectAngle(data[0], data[1], data[2], data[3]))
         print("当前角度为: %d°" % matched_angle)
         print("\n\n")
-    udp_socket.close()
 
 
-def USB_recv():
+def usb_recv():
     ser = serial.Serial("COM5", 115200)
     ser.close()
     ser.open()
@@ -275,17 +274,16 @@ def USB_recv():
             # 解析数据
             USB_recv_data = ((ser.read(num)).decode('ASCII')).replace("\r\n", "")
             USB_recv_data = bytes(USB_recv_data, encoding="utf8")
-            data = []
-            data.append(int(("0x" + (USB_recv_data[0: 16].decode())), 16))
-            data.append(int(("0x" + (USB_recv_data[16: 32].decode())), 16))
-            data.append(int(("0x" + (USB_recv_data[32: 48].decode())), 16))
-            data.append(int(("0x" + (USB_recv_data[48: 64].decode())), 16))
+            data = [int(("0x" + (USB_recv_data[0: 16].decode())), 16),
+                    int(("0x" + (USB_recv_data[16: 32].decode())), 16),
+                    int(("0x" + (USB_recv_data[32: 48].decode())), 16),
+                    int(("0x" + (USB_recv_data[48: 64].decode())), 16)]
             count = count + 1
             # 动态画图
             print("Raw_CH1_data:%.15f\nRaw_CH2_data:%.15f\nRaw_CH3_data:%.15f\nRaw_CH4_data:%.15f" % (
                 data[0], data[1], data[2], data[3]))
 
-            matched_angle = SelectAngle(data[0], data[1], data[2], data[3])
+            matched_angle = select_angle(data[0], data[1], data[2], data[3])
 
             # matched_angle_buff.append(matched_angle)
             #
@@ -326,10 +324,9 @@ def USB_recv():
             # Print1(count,SelectAngle(data[0], data[1], data[2], data[3]))
             print("\033[31m当前角度为:{} \033[0m".format(matched_angle))
             print("\n\n")
-    ser.close()
 
 
-def GetInfo():
+def init():
     global DB_IPAddr
     global DB_Name
     global distance
@@ -337,21 +334,10 @@ def GetInfo():
     global PC_IPAddr
     global PC_Port
     global TableName
-    DB_IPAddr = input("请输入数据库IP地址(默认192.168.3.2):192.168.")
-    if DB_IPAddr == "":
-        DB_IPAddr = "192.168.3.2"
-        print("192.168.3.2")
-    else:
-        DB_IPAddr = "192.168." + DB_IPAddr
-        print(DB_IPAddr)
-        pass
-    DB_Name = input("请输入数据库名(默认uav_data):")
-    if DB_Name == "":
-        DB_Name = "uav_data"
-        print(DB_Name)
-    else:
-        print(DB_Name)
-        pass
+    DB_IPAddr = "192.168.3.2"
+    print(DB_IPAddr)
+    DB_Name = "uav_data"
+    print(DB_Name)
 
 
 def read_time():
@@ -378,25 +364,18 @@ def read_time():
 
 
 def main():
-    GetInfo()
-    a = input("Press any key to start.")
+    init()
+    fetch_data()
+    input("Press any key to start.")
     print("等待接收数据")
-    SelectData()
     global udp_socket
     global matched_angle
-
     PC_Port = 8080
     udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)  # 创建套接字
     udp_socket.bind(("", PC_Port))  # 服务器绑定ip和端口
-
-    # 接收数据
-    # t = threading.Thread(target=udp_recv, args=(udp_socket,))
-    t = threading.Thread(target=USB_recv)
+    t = threading.Thread(target=usb_recv)
     t1 = threading.Thread(target=read_time)
     t.start()
-    # 发送数据
-    # t1 = threading.Thread(target=udp_send, args=(udp_socket,))  # Thread函数用于并行
-    # t1.start()  # 发送并行开始
     t1.start()
 
 
