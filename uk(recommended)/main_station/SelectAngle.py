@@ -440,9 +440,9 @@ def read_time():
 
 def main():
     init()
+    fetch_data()
     input("Press any key to start.......")
     print("Waiting for data......")
-    fetch_data()
     global count
     global run_flag
     global matched_angle_buff
