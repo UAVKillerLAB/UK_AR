@@ -1,0 +1,6 @@
+numpy
+pymysql
+serial
+matplotlib
+geographiclib
+django
